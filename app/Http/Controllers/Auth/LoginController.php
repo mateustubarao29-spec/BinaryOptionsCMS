@@ -45,8 +45,8 @@ class LoginController extends Controller
         $this->username() => 'required|string',
         'password' => 'required|string',
       ];
-      if(!config('app.debug')){
-        $array = array_merge($array, ['custom-g-recaptcha-response' => 'recaptcha']);
+      if(config('recaptcha.api_site_key') && config('recaptcha.api_secret_key')){
+        $array = array_merge($array, ['custom-g-recaptcha-response' => 'required|recaptcha']);
       }
       $request->validate($array);
     }
