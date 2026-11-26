@@ -25,7 +25,8 @@ COPY --from=composer:2.7.9 /usr/bin/composer /usr/bin/composer
 COPY . .
 COPY --from=assets /app/public /var/www/html/public
 
-RUN composer install --no-dev --no-interaction --prefer-dist --optimize-autoloader \
+RUN cp -n .env.example .env \
+    && composer install --no-interaction --prefer-dist --optimize-autoloader \
     && cp -n .env.example .env \
     && mkdir -p storage/framework/cache storage/framework/sessions storage/framework/views storage/logs bootstrap/cache \
     && chown -R www-data:www-data storage bootstrap/cache \
