@@ -34,4 +34,4 @@ RUN cp -n .env.example .env \
 
 EXPOSE 8080
 
-CMD sh -c 'PORT=${PORT:-8080}; sed -ri "s/^Listen 80/Listen ${PORT}/" /etc/apache2/ports.conf; sed -ri "s!<VirtualHost \\*:80>!<VirtualHost *:${PORT}>!" /etc/apache2/sites-available/000-default.conf; if [ -z "${APP_KEY}" ]; then php artisan key:generate --force --no-interaction; fi; php artisan storage:link || true; exec apache2-foreground'\n
+CMD ["sh", "-c", "PORT=${PORT:-8080}; sed -ri \"s/^Listen 80/Listen ${PORT}/\" /etc/apache2/ports.conf; sed -ri \"s/VirtualHost \\\\*:80/VirtualHost *:${PORT}/\" /etc/apache2/sites-available/000-default.conf; if [ -z \"$APP_KEY\" ]; then php artisan key:generate --force --no-interaction; fi; php artisan storage:link || true; exec apache2-foreground"]
