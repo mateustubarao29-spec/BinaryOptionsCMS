@@ -7,20 +7,18 @@
 
 <script>
     import Trading from "../user/Trading";
+
     export default {
         name: "App",
-        components : {
-          Trading
+        components: {
+            Trading
         },
-        data(){
-          return {
-            showTradingPanel: false,
-          }
-        },
-        watch: {
-          $route(to, from) {
-            this.showTradingPanel = this.$router.currentRoute.path.includes('/trading');
-          }
+        computed: {
+            // Keep the trading terminal visible on the first page load as well
+            // as after client-side navigation to and from /trading.
+            showTradingPanel() {
+                return this.$route.path.startsWith('/trading');
+            }
         }
     }
 </script>
