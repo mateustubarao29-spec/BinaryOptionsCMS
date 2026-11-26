@@ -28,7 +28,9 @@ COPY . .
 COPY --from=assets /app/public /var/www/html/public
 
 RUN cp -n .env.example .env \
-    && composer install --no-interaction --prefer-dist --optimize-autoloader \
+    && git config --global url.\"https://github.com/\".insteadOf \"git@github.com:\" \
+    && git config --global url.\"https://github.com/\".insteadOf \"ssh://git@github.com/\" \
+    && COMPOSER_ALLOW_SUPERUSER=1 composer install --no-interaction --prefer-dist --optimize-autoloader \
     && cp -n .env.example .env \
     && mkdir -p storage/framework/cache storage/framework/sessions storage/framework/views storage/logs bootstrap/cache \
     && chown -R www-data:www-data storage bootstrap/cache \
