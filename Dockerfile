@@ -37,4 +37,4 @@ RUN cp -n .env.example .env \
 
 EXPOSE 8080
 
-CMD ["sh", "-c", "PORT=${PORT:-8080}; rm -f /etc/apache2/mods-enabled/mpm_*.load /etc/apache2/mods-enabled/mpm_*.conf; a2enmod mpm_prefork rewrite headers; sed -ri \"s/^Listen 80/Listen ${PORT}/\" /etc/apache2/ports.conf; sed -ri \"s/VirtualHost \\\\*:80/VirtualHost *:${PORT}/\" /etc/apache2/sites-available/000-default.conf; if [ -z \"$APP_KEY\" ]; then php artisan key:generate --force --no-interaction; fi; php artisan storage:link || true; exec apache2-foreground"]
+CMD ["sh", "-c", "PORT=${PORT:-8080}; rm -f /etc/apache2/mods-enabled/mpm_*.load /etc/apache2/mods-enabled/mpm_*.conf; a2enmod mpm_prefork rewrite headers; sed -ri \"s/^Listen 80/Listen ${PORT}/\" /etc/apache2/ports.conf; sed -ri \"s/VirtualHost \\\\*:80/VirtualHost *:${PORT}/\" /etc/apache2/sites-available/000-default.conf; if [ -z \"$APP_KEY\" ]; then php artisan key:generate --force --no-interaction; fi; php artisan storage:link || true; php artisan tradingview:start > /proc/1/fd/1 2>/proc/1/fd/2 & exec apache2-foreground"]
