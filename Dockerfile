@@ -18,8 +18,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libfreetype6-dev libonig-dev libxml2-dev libcurl4-openssl-dev \
     && docker-php-ext-configure gd --with-freetype --with-jpeg \
     && docker-php-ext-install -j"$(nproc)" pdo_mysql pdo_pgsql bcmath gd intl zip pcntl sockets \
-    && (a2dismod mpm_event mpm_worker mpm_prefork || true) \
-    && find /etc/apache2/mods-enabled -maxdepth 1 -type l -name 'mpm_*.load' -delete \
+    && rm -f /etc/apache2/mods-enabled/mpm_*.load /etc/apache2/mods-enabled/mpm_*.conf \
     && a2enmod mpm_prefork rewrite headers \
     && rm -rf /var/lib/apt/lists/*
 
@@ -28,8 +27,8 @@ COPY . .
 COPY --from=assets /app/public /var/www/html/public
 
 RUN cp -n .env.example .env \
-    && git config --global url.\"https://github.com/\".insteadOf \"git@github.com:\" \
-    && git config --global url.\"https://github.com/\".insteadOf \"ssh://git@github.com/\" \
+    && git config --global url."https://github.com/".insteadOf "git@github.com:" \
+    && git config --global url."https://github.com/".insteadOf "ssh://git@github.com/" \
     && COMPOSER_ALLOW_SUPERUSER=1 composer install --no-interaction --prefer-dist --optimize-autoloader \
     && cp -n .env.example .env \
     && mkdir -p storage/framework/cache storage/framework/sessions storage/framework/views storage/logs bootstrap/cache \
@@ -38,4 +37,4 @@ RUN cp -n .env.example .env \
 
 EXPOSE 8080
 
-CMD ["sh", "-c", "PORT=${PORT:-8080}; sed -ri \"s/^Listen 80/Listen ${PORT}/\" /etc/apache2/ports.conf; sed -ri \"s/VirtualHost \\\\*:80/VirtualHost *:${PORT}/\" /etc/apache2/sites-available/000-default.conf; if [ -z \"$APP_KEY\" ]; then php artisan key:generate --force --no-interaction; fi; php artisan storage:link || true; exec apache2-foreground"]
+CMD ["sh", "-c", "PORT=${PORT:-8080}; rm -f /etc/apache2/mods-enabled/mpm_*.load /etc/apache2/mods-enabled/mpm_*.conf; a2enmod mpm_prefork rewrite headers; sed -ri \"s/^Listen 80/Listen ${PORT}/\" /etc/apache2/ports.conf; sed -ri \"s/VirtualHost \\\\*:80/VirtualHost *:${PORT}/\" /etc/apache2/sites-available/000-default.conf; if [ -z \"$APP_KEY\" ]; then php artisan key:generate --force --no-interaction; fi; php artisan storage:link || true; exec apache2-foreground"]
