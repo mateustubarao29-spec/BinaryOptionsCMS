@@ -6,10 +6,7 @@
         "framework",
         "laravel"
     ],
-    "repositories": [{
-        "type": "vcs",
-        "url": "https://github.com/Troodi/fxcmrest-php"
-    }],
+    "repositories": [],
     "license": "MIT",
     "require": {
         "php": "^8.0|^8.1",
@@ -36,7 +33,6 @@
         "spatie/async": "^1.4",
         "textalk/websocket": "^1.4",
         "torann/geoip": "^3.0",
-        "troodi/laravel-auto-deploy": "^2.0.3",
         "twilio/sdk": "^6.10",
         "yajra/laravel-datatables-oracle": "^9.21.2"
     },
