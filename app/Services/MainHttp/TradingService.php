@@ -34,59 +34,74 @@ class TradingService
 {
     public function getAuthTokenServ(Request $request)
     {
-        return Cache::remember('authTokenServ', 3600 * 24, function () {
+        return Cache::remember('authTokenServ_v2', 3600 * 24, function () {
             $login = config('tradingview.login');
             $password = config('tradingview.password');
 
-            $auth_token = "";
-            if (file_exists(__DIR__ . '/cookie.txt')) {
-                $ch = curl_init();
-                curl_setopt($ch, CURLOPT_URL, "https://www.tradingview.com/quote_token/");
-                curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-                curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
-                curl_setopt($ch, CURLOPT_COOKIEFILE, __DIR__ . '/cookie.txt');
-                curl_setopt($ch, CURLOPT_COOKIEJAR, __DIR__ . '/cookie.txt');
-                curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
-                curl_setopt($ch, CURLOPT_ENCODING, "gzip");
-                $auth_token = curl_exec($ch);
-                $auth_token = ltrim($auth_token, '"');
-                $auth_token = rtrim($auth_token, '"');
-            }
-            if (strlen($auth_token) < 150) {
-                $request_headers = [
-                    "accept: */*",
-                    "accept-encoding: gzip, deflate, br",
-                    "accept-language: ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7,lt;q=0.6",
-                    "cache-control: no-cache",
-                    "content-type: application/x-www-form-urlencoded",
-                    "origin: https://www.tradingview.com",
-                    "pragma: no-cache",
-                    "referer: no-cache",
-                    "sec-fetch-dest: empty",
-                    "sec-fetch-mode: cors",
-                    "sec-fetch-site: same-origin",
-                    "user-agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/84.0.4147.125 Safari/537.36",
-                    "x-language: en",
-                    "x-requested-with: XMLHttpRequest"
-                ];
-                $ch = curl_init();
-                curl_setopt($ch, CURLOPT_POST, true);
-                curl_setopt($ch, CURLOPT_URL, "https://www.tradingview.com/accounts/signin/");
-                curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-                curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
-                curl_setopt($ch, CURLOPT_COOKIEFILE, __DIR__ . '/cookie.txt');
-                curl_setopt($ch, CURLOPT_COOKIEJAR, __DIR__ . '/cookie.txt');
-                curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
-                curl_setopt($ch, CURLOPT_HTTPHEADER, $request_headers);
-                curl_setopt($ch, CURLOPT_ENCODING, "gzip");
-                curl_setopt($ch, CURLOPT_POSTFIELDS, "feature_source=Header&username=$login&password=$password&remember=on");
-                $curl_exec = curl_exec($ch);
-                curl_close($ch);
-                $json = json_decode($curl_exec);
-                $auth_token = $json->user->auth_token;
+            // Public chart data can use TradingView's anonymous token.
+            // Do not attempt an empty sign-in when no account credentials are configured.
+            if (empty($login) || empty($password)) {
+                return 'unauthorized_user_token';
             }
 
-            return $auth_token;
+            $cookieFile = __DIR__ . '/cookie.txt';
+            $authToken = '';
+
+            if (file_exists($cookieFile)) {
+                $ch = curl_init();
+                curl_setopt_array($ch, [
+                    CURLOPT_URL => 'https://www.tradingview.com/quote_token/',
+                    CURLOPT_RETURNTRANSFER => true,
+                    CURLOPT_SSL_VERIFYHOST => 2,
+                    CURLOPT_SSL_VERIFYPEER => true,
+                    CURLOPT_COOKIEFILE => $cookieFile,
+                    CURLOPT_COOKIEJAR => $cookieFile,
+                    CURLOPT_ENCODING => 'gzip',
+                    CURLOPT_TIMEOUT => 15,
+                ]);
+                $authToken = (string) curl_exec($ch);
+                curl_close($ch);
+                $authToken = trim($authToken, '"');
+            }
+
+            if (strlen($authToken) < 150) {
+                $headers = [
+                    'accept: */*',
+                    'content-type: application/x-www-form-urlencoded',
+                    'origin: https://www.tradingview.com',
+                    'referer: https://www.tradingview.com/',
+                    'user-agent: Mozilla/5.0',
+                    'x-language: en',
+                    'x-requested-with: XMLHttpRequest',
+                ];
+
+                $ch = curl_init();
+                curl_setopt_array($ch, [
+                    CURLOPT_POST => true,
+                    CURLOPT_URL => 'https://www.tradingview.com/accounts/signin/',
+                    CURLOPT_RETURNTRANSFER => true,
+                    CURLOPT_SSL_VERIFYHOST => 2,
+                    CURLOPT_SSL_VERIFYPEER => true,
+                    CURLOPT_COOKIEFILE => $cookieFile,
+                    CURLOPT_COOKIEJAR => $cookieFile,
+                    CURLOPT_HTTPHEADER => $headers,
+                    CURLOPT_ENCODING => 'gzip',
+                    CURLOPT_TIMEOUT => 15,
+                    CURLOPT_POSTFIELDS => http_build_query([
+                        'feature_source' => 'Header',
+                        'username' => $login,
+                        'password' => $password,
+                        'remember' => 'on',
+                    ]),
+                ]);
+                $response = curl_exec($ch);
+                curl_close($ch);
+
+                $json = json_decode((string) $response);
+                $authToken = $json->user->auth_token ?? '';
+            }
+
+            return strlen($authToken) >= 150 ? $authToken : 'unauthorized_user_token';
         });
     }
 
