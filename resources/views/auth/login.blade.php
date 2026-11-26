@@ -76,10 +76,16 @@
                       <a href="{{ route('password.request') }}" class="card-link"><small>@lang('locale.login_forgot')</small></a>
                     </div>
                   </div>
-                  @component('components.recaptcha') @endcomponent
-                  <button type="button" class="btn btn-primary glow w-100 position-relative mt-1" data-toggle="modal" data-target="#captchaModal">@lang('locale.login_login')
-                    <i id="icon-arrow" class="bx bx-right-arrow-alt"></i>
-                  </button>
+                  @if(config('recaptcha.api_site_key') && config('recaptcha.api_secret_key'))
+                    @component('components.recaptcha') @endcomponent
+                    <button type="button" class="btn btn-primary glow w-100 position-relative mt-1" data-toggle="modal" data-target="#captchaModal">@lang('locale.login_login')
+                      <i id="icon-arrow" class="bx bx-right-arrow-alt"></i>
+                    </button>
+                  @else
+                    <button type="submit" class="btn btn-primary glow w-100 position-relative mt-1">@lang('locale.login_login')
+                      <i id="icon-arrow" class="bx bx-right-arrow-alt"></i>
+                    </button>
+                  @endif
                 </form>
                 <hr>
                 <div class="text-center">
